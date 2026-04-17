@@ -4,14 +4,27 @@ Autonomous agents that run Kiro CLI in headless mode inside Docker containers.
 
 ## Agents
 
+### CI/CD Agents (triggered automatically via GitHub Actions on every PR)
+
+These agents are invoked by `.github/workflows/pr-review.yml` — no manual action needed.
+
+| Agent | What it does | Trigger |
+|-------|-------------|---------|
+| `pr-reviewer-agent` | Reviews PR diff for bugs, security issues, style violations. Posts findings as a PR comment. | `pull_request` event |
+| `query-review-agent` | Finds SQL in the PR diff, runs it against live Athena, optimizes with output equivalence guardrail, posts before/after proof as a PR comment. | `pull_request` event |
+
+After both agents pass, the workflow auto-merges the PR (configurable — remove the `auto-merge` job for human-only approval).
+
+### Standalone Agents (run locally via Docker or in your AWS account)
+
+These agents are invoked manually via `docker run` or the runner scripts. They run anywhere — your laptop, Lambda, ECS, EC2.
+
 | Agent | What it does | Input needed |
 |-------|-------------|--------------|
-| `log-investigator-agent` | Discovers all CloudWatch log groups, queries for errors, ranks by impact | Just AWS creds |
-| `pipeline-agent` | Clones repo → implements task → pushes PR → self-reviews → ready for human merge | Task description + GitHub token |
-| `pr-reviewer-agent` | Reviews all open PRs on a repo, approves or requests changes | GitHub token |
+| `pipeline-agent` | Clones repo → implements task → pushes PR → self-reviews → ready for merge | Task description + GitHub token |
 | `code-agent` | Implements a single task and pushes a PR (no review) | Task description + GitHub token |
 | `query-optimizer-agent` | Discovers slowest Athena queries, optimizes with output equivalence guardrail, produces proof report | AWS creds |
-| `query-review-agent` | Reviews PRs for SQL, runs against live Athena, optimizes, posts before/after proof as PR comment | GitHub token + AWS creds |
+| `log-investigator-agent` | Discovers all CloudWatch log groups, queries for errors, ranks by impact | AWS creds |
 
 ## Quick Start
 
