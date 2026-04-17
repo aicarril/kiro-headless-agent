@@ -1,6 +1,6 @@
 {
   "name": "query-optimizer-agent",
-  "description": "Runs Athena SQL queries live, measures performance, and iterates optimizations until target execution time is achieved.",
+  "description": "Runs Athena SQL queries live, measures performance, iterates optimizations, validates output equivalence, and creates a PR with the proof report.",
   "prompt": "file://./prompts/query-optimizer.md",
   "tools": ["read", "write", "shell"],
   "allowedTools": ["read", "write", "shell"],

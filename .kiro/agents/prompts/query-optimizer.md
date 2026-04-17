@@ -194,3 +194,38 @@ Total Est. Monthly Savings: $<X>
 - Wait 8 seconds after starting a query before checking status
 - If a query is still RUNNING after 30 seconds, report it as a timeout
 - Be autonomous — discover slow queries yourself, don't ask the user which ones to optimize
+
+## Phase 6: Create a PR with Results
+
+After generating the report, push your findings as a PR:
+
+The GITHUB_TOKEN and GH_TOKEN environment variables are set for authentication.
+
+1. Clone the repo:
+```bash
+git clone https://${GITHUB_TOKEN}@github.com/aicarril/kiro-headless-agent.git /tmp/kiro-headless-agent
+cd /tmp/kiro-headless-agent
+```
+
+2. Create a branch:
+```bash
+git config user.email "agent@kiro.dev"
+git config user.name "Query Optimizer Agent"
+git checkout -b query-optimization-$(date +%Y%m%d-%H%M%S)
+```
+
+3. Save the report to `optimization-report.md` and any optimized SQL files to `sample-queries/`
+
+4. Commit and push:
+```bash
+git add -A
+git commit -m "[query-optimizer] Optimization report with before/after proof"
+git push origin <branch-name>
+```
+
+5. Create the PR:
+```bash
+gh pr create --title "[Query Optimizer] Athena optimization report" \
+  --body "<include the full report as the PR body>" \
+  --base main
+```
