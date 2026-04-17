@@ -23,7 +23,7 @@ These agents are invoked manually via `docker run` or the runner scripts. They r
 |-------|-------------|--------------|
 | `pipeline-agent` | Clones repo → implements task → pushes PR → self-reviews → ready for merge | Task description + GitHub token |
 | `code-agent` | Implements a single task and pushes a PR (no review) | Task description + GitHub token |
-| `query-optimizer-agent` | Discovers slowest Athena queries, optimizes with output equivalence guardrail, produces proof report | AWS creds |
+| `query-optimizer-agent` | Discovers slowest Athena queries, optimizes with output equivalence guardrail, produces proof report, and creates a PR with results | AWS creds + GitHub token |
 | `log-investigator-agent` | Discovers all CloudWatch log groups, queries for errors, ranks by impact | AWS creds |
 
 ## Quick Start
