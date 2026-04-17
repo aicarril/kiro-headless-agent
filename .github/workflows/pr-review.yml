@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
@@ -60,3 +60,17 @@ jobs:
             kiro-agent:latest \
             chat --no-interactive --trust-all-tools --agent query-review-agent \
             "Review PR #${{ github.event.pull_request.number }} on repo ${{ github.repository }}. Find any SQL in the diff, run against live Athena, optimize with output equivalence validation, and post findings as a PR comment."
+
+  auto-merge:
+    name: Auto-Merge on Approval
+    needs: [code-review, query-review]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --squash \
+            --delete-branch
