@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  MyBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-demo-bucket-12345
+      Tags:
+       - Key: Environment
+         Value: prod
+       - Key: Team
+         Value:    "engineering"
+      VersioningConfiguration:
+          Status: Enabled
+  MyQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+        QueueName: my-queue
+        VisibilityTimeout:  30
+        Tags:
+         - Key: Environment
+           Value: prod

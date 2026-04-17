@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "YAML Lint on Save",
+  "description": "Automatically runs yamllint on YAML files when they are saved, and asks the agent to fix any issues found.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.yml",
+      "*.yaml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A YAML file was just saved. Run `yamllint` on it and if there are any linting errors, fix them automatically. Preserve the original intent of the file."
+  }
+}
