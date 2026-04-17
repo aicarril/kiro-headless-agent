@@ -12,6 +12,7 @@ set -e
 
 TASK="$1"
 REPO="aicarril/amplify-vite-react-template"
+OUTPUT_FILE="pipeline-output-$(date +%Y%m%d-%H%M%S).txt"
 
 if [ -z "$TASK" ]; then
   echo "Usage: ./run-pipeline.sh \"<task description>\""
@@ -27,6 +28,7 @@ echo "========================================="
 echo "Pipeline: $(date)"
 echo "Task: $TASK"
 echo "Repo: $REPO"
+echo "Output: $OUTPUT_FILE"
 echo "========================================="
 
 docker run --rm --platform linux/amd64 \
@@ -36,10 +38,10 @@ docker run --rm --platform linux/amd64 \
   kiro-agent:latest \
   chat --no-interactive --trust-all-tools --agent pipeline-agent \
   "Task: $TASK. Repo: https://github.com/$REPO" \
-  2>&1 | tee pipeline-output.txt
+  2>&1 | sed 's/\x1b\[[0-9;]*m//g' | sed 's/\x1b\[?25[hl]//g' | sed 's/\x1b\[0m//g' | tee "$OUTPUT_FILE"
 
 echo ""
 echo "========================================="
-echo "Done. Output saved to pipeline-output.txt"
+echo "Done. Clean output saved to $OUTPUT_FILE"
 echo "Check https://github.com/$REPO/pulls for the PR."
 echo "========================================="
