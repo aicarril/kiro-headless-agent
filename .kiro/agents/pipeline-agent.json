@@ -1,0 +1,8 @@
+{
+  "name": "pipeline-agent",
+  "description": "Orchestrates the full pipeline: clones repo, implements task, pushes PR, reviews PR, fixes if rejected. All in one run.",
+  "prompt": "file://./prompts/pipeline-agent.md",
+  "tools": ["read", "write", "shell"],
+  "allowedTools": ["read", "write", "shell"],
+  "includeMcpJson": true
+}
