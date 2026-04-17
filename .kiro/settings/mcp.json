@@ -8,6 +8,11 @@
       },
       "disabled": false,
       "autoApprove": ["call_aws", "suggest_aws_commands"]
+    },
+    "builder-mcp": {
+      "command": "builder-mcp",
+      "disabled": false,
+      "autoApprove": []
     }
   }
 }

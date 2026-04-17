@@ -1,0 +1,8 @@
+{
+  "name": "query-review-agent",
+  "description": "Reviews PRs for SQL queries, runs them against live Athena, optimizes with output equivalence guardrail, and posts before/after proof as a PR comment.",
+  "prompt": "file://./prompts/query-review-agent.md",
+  "tools": ["read", "write", "shell"],
+  "allowedTools": ["read", "write", "shell"],
+  "includeMcpJson": true
+}

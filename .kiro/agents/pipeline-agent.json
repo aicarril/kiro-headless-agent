@@ -1,8 +1,13 @@
 {
   "name": "pipeline-agent",
-  "description": "Orchestrates the full pipeline: clones repo, implements task, pushes PR, reviews PR, fixes if rejected. All in one run.",
+  "description": "Orchestrates the full pipeline: clones repo, delegates implementation to code-agent, delegates review to pr-reviewer-agent, handles fix loop. All in one run.",
   "prompt": "file://./prompts/pipeline-agent.md",
-  "tools": ["read", "write", "shell"],
-  "allowedTools": ["read", "write", "shell"],
-  "includeMcpJson": true
+  "tools": ["read", "write", "shell", "grep", "glob", "subagent"],
+  "allowedTools": ["read", "write", "shell", "grep", "glob", "subagent"],
+  "toolsSettings": {
+    "subagent": {
+      "availableAgents": ["code-agent", "pr-reviewer-agent"],
+      "trustedAgents": ["code-agent", "pr-reviewer-agent"]
+    }
+  }
 }

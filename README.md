@@ -10,7 +10,8 @@ Autonomous agents that run Kiro CLI in headless mode inside Docker containers.
 | `pipeline-agent` | Clones repo → implements task → pushes PR → self-reviews → ready for human merge | Task description + GitHub token |
 | `pr-reviewer-agent` | Reviews all open PRs on a repo, approves or requests changes | GitHub token |
 | `code-agent` | Implements a single task and pushes a PR (no review) | Task description + GitHub token |
-| `query-optimizer-agent` | Runs Athena queries live, iterates until target latency is met | AWS creds |
+| `query-optimizer-agent` | Discovers slowest Athena queries, optimizes with output equivalence guardrail, produces proof report | AWS creds |
+| `query-review-agent` | Reviews PRs for SQL, runs against live Athena, optimizes, posts before/after proof as PR comment | GitHub token + AWS creds |
 
 ## Quick Start
 
@@ -38,6 +39,21 @@ export GITHUB_TOKEN="<github-pat>"
 ./run-pipeline.sh "Add a footer component with copyright text"
 ```
 
+### Query Optimizer (autonomous — discovers slow queries itself)
+```bash
+export KIRO_API_KEY="<key>"
+export AWS_ACCESS_KEY_ID="<key>"
+export AWS_SECRET_ACCESS_KEY="<secret>"
+./run-query-optimizer.sh
+```
+
+The optimizer will:
+1. Pull query history from Athena and rank by execution time
+2. Run the slowest queries live to get a fresh baseline
+3. Apply optimizations (partition pruning, column pruning, JOIN fixes, predicate pushdown)
+4. Validate that optimized output is identical to the original (guardrail)
+5. Produce a proof report with before/after metrics and savings estimates
+
 Output is saved to a timestamped file with ANSI codes stripped for clean logs.
 
 ### Pipeline Flow
@@ -57,6 +73,21 @@ Pipeline Agent (one container)
 PR ready for human merge
 ```
 
+### PR Review (triggered automatically on every PR via GitHub Actions)
+```
+Developer opens a PR
+    ↓
+GitHub Actions triggers two parallel jobs:
+    ├── pr-reviewer-agent  → general code review (bugs, security, style)
+    └── query-review-agent → finds SQL, runs against live Athena,
+                             optimizes, validates output equivalence,
+                             posts before/after proof as PR comment
+    ↓
+Both agents post their findings as PR comments
+```
+
+To enable: add `KIRO_API_KEY`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` to your repo's GitHub Secrets (Settings → Secrets → Actions). `GITHUB_TOKEN` is provided automatically by GitHub Actions.
+
 ## Credentials
 
 All credentials are passed as environment variables — nothing is hardcoded.
@@ -74,13 +105,17 @@ In production (Lambda/ECS/EC2), AWS credentials are inherited automatically from
 ## Project Structure
 
 ```
+.github/
+  workflows/
+    pr-review.yml                 # GitHub Actions: triggers both review agents on every PR
 .kiro/
   agents/
     log-investigator-agent.json   # CloudWatch error discovery
     pipeline-agent.json           # Full task → PR → review pipeline
     code-agent.json               # Task → PR (no review)
     pr-reviewer-agent.json        # Reviews open PRs
-    query-optimizer-agent.json    # Athena query optimization
+    query-optimizer-agent.json    # Athena query optimization (standalone)
+    query-review-agent.json       # SQL review on PRs with live Athena proof
     prompts/                      # Agent instructions (referenced by agents)
   settings/
     mcp.json                      # MCP server config
@@ -89,6 +124,11 @@ In production (Lambda/ECS/EC2), AWS credentials are inherited automatically from
     project-context.md            # Auto-included project context
 Dockerfile                        # Container: python + aws-cli + gh + kiro-cli
 run-pipeline.sh                   # One-command pipeline runner
+run-query-optimizer.sh            # One-command query optimizer runner
+run-query-review.sh               # One-command query review for a specific PR
+sample-queries/
+  cost_reports.sql                # CUR cost analysis queries (mix of good and bad)
+  event_analytics.sql             # Event/ops dashboard queries (mix of good and bad)
 ```
 
 ## Requirements

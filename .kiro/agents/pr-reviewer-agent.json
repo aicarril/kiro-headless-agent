@@ -1,8 +1,7 @@
 {
   "name": "pr-reviewer-agent",
-  "description": "Reviews open PRs on a GitHub repo, checks code quality, and approves or requests changes.",
+  "description": "Review subagent — checks PR diff for bugs, style violations, security issues. Returns JSON verdict: APPROVED or CHANGES_REQUESTED with issue list.",
   "prompt": "file://./prompts/pr-reviewer-agent.md",
-  "tools": ["read", "write", "shell"],
-  "allowedTools": ["read", "write", "shell"],
-  "includeMcpJson": true
+  "tools": ["read", "shell", "grep", "glob"],
+  "allowedTools": ["read", "shell", "grep", "glob"]
 }
