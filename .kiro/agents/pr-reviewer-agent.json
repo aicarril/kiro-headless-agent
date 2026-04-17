@@ -1,0 +1,8 @@
+{
+  "name": "pr-reviewer-agent",
+  "description": "Reviews open PRs on a GitHub repo, checks code quality, and approves or requests changes.",
+  "prompt": "file://./prompts/pr-reviewer-agent.md",
+  "tools": ["read", "write", "shell"],
+  "allowedTools": ["read", "write", "shell"],
+  "includeMcpJson": true
+}

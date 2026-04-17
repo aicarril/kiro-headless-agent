@@ -1,8 +1,12 @@
-# Kiro Headless Agent in Docker
+# Kiro Headless Agents in Docker
 
-An autonomous agent that runs Kiro CLI in headless mode inside a Docker container. It discovers CloudWatch log groups, queries them for errors, and ranks issues by impact.
+Autonomous agents that run Kiro CLI in headless mode inside Docker containers. Three agents, one pipeline:
 
-Runs anywhere: Lambda, ECS, EKS, EC2, or your local Docker Desktop.
+1. **Log Investigator** — discovers CloudWatch log groups, queries for errors, ranks by impact
+2. **Code Agent** — accepts a task, clones a repo, implements the change, pushes a PR
+3. **PR Reviewer** — reviews open PRs, approves or requests changes (never merges — that's human only)
+
+The pipeline script chains them: Code Agent → PR Reviewer → (fix loop if rejected) → human merges.
 
 ## Quick Start
 
@@ -11,30 +15,9 @@ Runs anywhere: Lambda, ECS, EKS, EC2, or your local Docker Desktop.
 docker build --platform linux/amd64 -t kiro-agent:latest .
 ```
 
-### Run
-```bash
-docker run --rm --platform linux/amd64 \
-  -e KIRO_API_KEY="<your-kiro-api-key>" \
-  -e AWS_ACCESS_KEY_ID="<key>" \
-  -e AWS_SECRET_ACCESS_KEY="<secret>" \
-  -e AWS_REGION="us-east-1" \
-  kiro-agent:latest \
-  chat --no-interactive --trust-all-tools --agent log-investigator-agent \
-  "Get to work." 2>&1 | tee report.txt
-```
+### Run Individual Agents
 
-## What It Does
-
-1. Discovers all CloudWatch log groups in the account
-2. Filters to application-relevant logs (skips CDK/infra plumbing)
-3. Queries each log group for errors in the last 24 hours
-4. Ranks errors by frequency, severity, and impact
-5. Generates a report with findings and recommended fixes
-
-## Extending: Code Correlation and PRs
-
-The agent can also clone a GitHub repo, correlate errors to source code, and push a fix — but this requires providing a repo in the prompt:
-
+**Log Investigator** (no input needed — discovers errors autonomously):
 ```bash
 docker run --rm --platform linux/amd64 \
   -e KIRO_API_KEY="<key>" \
@@ -43,38 +26,59 @@ docker run --rm --platform linux/amd64 \
   -e AWS_REGION="us-east-1" \
   kiro-agent:latest \
   chat --no-interactive --trust-all-tools --agent log-investigator-agent \
-  "Get to work. If you find errors, clone https://github.com/<owner>/<repo> and correlate errors to source code. Push a fix if possible."
+  "Get to work." 2>&1 | tee report.txt
 ```
 
-For private repos, mount a git credential or SSH key into the container.
-
-## Agents
-
-| Agent | Description |
-|-------|-------------|
-| `log-investigator-agent` | Autonomous error investigator — discovers logs, ranks errors, recommends fixes |
-| `query-optimizer-agent` | Runs Athena queries live and iterates until target latency is met |
-
-## Project Structure
-
+**Code Agent** (give it a task and a repo):
+```bash
+docker run --rm --platform linux/amd64 \
+  -e KIRO_API_KEY="<key>" \
+  -e GITHUB_TOKEN="<github-pat>" \
+  -e GH_TOKEN="<github-pat>" \
+  kiro-agent:latest \
+  chat --no-interactive --trust-all-tools --agent code-agent \
+  "Task: Add a footer component. Repo: https://github.com/aicarril/amplify-vite-react-template"
 ```
-.kiro/
-  agents/
-    log-investigator-agent.json
-    query-optimizer-agent.json
-    prompts/
-      log-investigator.md
-      query-optimizer.md
-  settings/
-    mcp.json
-  steering/
-    coding-standards.md
-    project-context.md
-Dockerfile
+
+**PR Reviewer** (reviews open PRs on a repo):
+```bash
+docker run --rm --platform linux/amd64 \
+  -e KIRO_API_KEY="<key>" \
+  -e GITHUB_TOKEN="<github-pat>" \
+  -e GH_TOKEN="<github-pat>" \
+  kiro-agent:latest \
+  chat --no-interactive --trust-all-tools --agent pr-reviewer-agent \
+  "Review all open PRs on https://github.com/aicarril/amplify-vite-react-template"
 ```
+
+### Run the Full Pipeline
+
+The pipeline script chains Code Agent → PR Reviewer with a retry loop:
+
+```bash
+export KIRO_API_KEY="<key>"
+export GITHUB_TOKEN="<github-pat>"
+./run-pipeline.sh "Add a dark mode toggle to the settings page"
+```
+
+Pipeline flow:
+1. Code Agent clones repo, implements task, pushes PR
+2. PR Reviewer checks the PR
+3. If rejected → Code Agent fixes based on feedback → PR Reviewer re-reviews
+4. If approved → human merges
+
+All logs and reports are saved to `pipeline-output/`.
+
+## Memory Between Agents
+
+Agents share context via a mounted volume (`pipeline-output/`). Each agent writes its report there, and the next agent reads it. The orchestrator script passes reviewer feedback back to the code agent when changes are requested.
 
 ## Requirements
 
 - Docker
-- Kiro Pro API key (for headless mode)
-- AWS credentials with CloudWatch Logs read access
+- Kiro Pro API key (headless mode)
+- GitHub Personal Access Token (for code agent and PR reviewer)
+- AWS credentials (only for log investigator)
+
+### GitHub Token Scopes
+The GitHub PAT needs: `repo`, `read:org` (for PR creation and review).

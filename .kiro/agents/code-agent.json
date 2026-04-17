@@ -1,0 +1,8 @@
+{
+  "name": "code-agent",
+  "description": "Accepts a task, clones a GitHub repo, implements the change, and pushes a PR branch.",
+  "prompt": "file://./prompts/code-agent.md",
+  "tools": ["read", "write", "shell"],
+  "allowedTools": ["read", "write", "shell"],
+  "includeMcpJson": true
+}
