@@ -1,0 +1,9 @@
+{
+  "name": "log-investigator-agent",
+  "description": "Queries CloudWatch logs, correlates errors to source code in a GitHub repo, ranks by impact, and pushes a fix as a PR.",
+  "prompt": "file://./prompts/log-investigator.md",
+  "tools": ["read", "write", "shell"],
+  "allowedTools": ["read", "write", "shell"],
+  "includeMcpJson": true,
+  "welcomeMessage": "Ready to investigate production errors. Provide a CloudWatch log group and GitHub repo."
+}
