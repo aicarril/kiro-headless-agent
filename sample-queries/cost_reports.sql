@@ -112,3 +112,15 @@ WHERE billing_period = '2026-04'
 GROUP BY 1, 2, 3, 4
 ORDER BY transfer_cost DESC
 LIMIT 20;
+
+
+-- ------------------------------------------------------------
+-- Q8: EKS cost breakdown (top spender)
+-- PURPOSE: EKS is the #1 cost driver — break down by usage type
+-- NOTE: Missing partition filter, uses SELECT *
+-- ------------------------------------------------------------
+SELECT *
+FROM cost_db.customer_all
+WHERE product_servicecode = 'AmazonEKS'
+  AND line_item_line_item_type = 'Usage'
+ORDER BY line_item_unblended_cost DESC;
